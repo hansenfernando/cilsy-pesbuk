@@ -35,7 +35,7 @@ metadata:
   name: pesbuk-secret-prod
 type: Opaque
 data:
-  DB_HOST: YnBjaWxzeS5jZmlnZHd5bWM2dzkuYXAtc291dGhlYXN0LTEucmRzLmFtYXpvbmF3cy5jb20K
+  DB_HOST: Y2lsc3liaWdwcm9kYi5jdng1aXdzc291dWYuYXAtc291dGhlYXN0LTEucmRzLmFtYXpvbmF3cy5jb20=
   DB_USER: ZGV2b3BzY2lsc3k=
   DB_PASS: MTIzNDU2Nzg5MA==
   DB_NAME: cGVzYnVrcHJvZGRi
