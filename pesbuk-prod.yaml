@@ -1,0 +1,136 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cilsy-prod
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: cilsy-prod
+  name: pesbuk-configmap-secret-prod
+data:
+  config.php: |
+    <?php
+    $db_host = getenv("DB_HOST");
+    $db_user = getenv("DB_USER");
+    $db_pass = getenv("DB_PASS");
+    $db_name = getenv("DB_NAME");
+    try {    
+      //create PDO connection
+      $db = new PDO("mysql:host=$db_host;dbname=$db_name", $db_user, $db_pass);
+    } catch(PDOException $e) {
+      //show error
+      die("Terjadi masalah: " . $e->getMessage());
+    }
+    ?>
+    
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: cilsy-prod
+  name: pesbuk-secret-prod
+type: Opaque
+data:
+  DB_HOST: bWFjcm9zc2RiLmN2eDVpd3Nzb3V1Zi5hcC1zb3V0aGVhc3QtMS5yZHMuYW1hem9uYXdzLmNvbQ==
+  DB_USER: ZGV2b3BzY2lsc3k=
+  DB_PASS: MTIzNDU2Nzg5MA==
+  DB_NAME: ZGJzb3NtZWQ=
+  MYSQL_ROOT_PASSWORD: MTIzNDU2Nzg5MA==
+  
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: cilsy-prod
+  name: pesbuk-prod
+  labels:
+    app: pesbuk-prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pesbuk-prod
+  template:
+    metadata:
+      labels:
+        app: pesbuk-prod
+    spec:
+      volumes:
+        - name: config-secret
+          configMap:
+            name: pesbuk-configmap-secret-prod
+      containers:
+      - name: pesbuk-prod
+        image: hansenfernando/pesbukcilsy-prod:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config-secret
+          mountPath: "/var/www/html/config.php"
+          subPath: "config.php"
+        env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: pesbuk-secret-prod
+              key: DB_HOST
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: pesbuk-secret-prod
+              key: DB_USER
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: pesbuk-secret-prod
+              key: DB_PASS
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: pesbuk-secret-prod
+              key: DB_NAME
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  namespace: cilsy-prod      
+  name: pesbuk-svc-prod
+spec:
+  selector:
+    app: pesbuk-prod
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+
+---
+
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  namespace: cilsy-prod
+  name: pesbuk-ingress-prod
+  annotations:
+     kubernetes.io/ingress.class: "nginx"
+     nginx.ingress.kubernetes.io/affinity: "cookie"
+     nginx.ingress.kubernetes.io/session-cookie-name: "pesbuk-prod-cookie"
+     nginx.ingress.kubernetes.io/session-cookie-expires: "86400"
+     nginx.ingress.kubernetes.io/session-cookie-max-age: "86400"
+     nginx.ingress.kubernetes.io/ssl-redirect: "false"
+     nginx.ingress.kubernetes.io/affinity-mode: persistent
+     nginx.ingress.kubernetes.io/session-cookie-hash: sha1
+spec:
+  rules:
+  - host: pesbukcilsy.hansenfernando.xyz      
+    http:
+      paths:
+        - backend:
+           serviceName: pesbuk-svc-prod
+           servicePort: 80
