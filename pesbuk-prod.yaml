@@ -66,7 +66,7 @@ spec:
             name: pesbuk-configmap-secret-prod
       containers:
       - name: pesbuk-prod
-        image: sekolahdevopscilsy/php-sosmed:latest
+        image: hansenfernando/cilsypesbuk-prod:latest
         ports:
         - containerPort: 80
         volumeMounts:
