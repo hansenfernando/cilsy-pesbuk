@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: cilsy-prod
+  name: cilsy-staging
 
 ---
 
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  namespace: cilsy-prod
-  name: pesbuk-configmap-secret-prod
+  namespace: cilsy-staging
+  name: pesbuk-configmap-secret-staging
 data:
   config.php: |
     <?php
@@ -31,14 +31,14 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  namespace: cilsy-prod
-  name: pesbuk-secret-prod
+  namespace: cilsy-staging
+  name: pesbuk-secret-staging
 type: Opaque
 data:
   DB_HOST: Y2lsc3liaWdwcm9kYi5jdng1aXdzc291dWYuYXAtc291dGhlYXN0LTEucmRzLmFtYXpvbmF3cy5jb20=
   DB_USER: ZGV2b3BzY2lsc3k=
   DB_PASS: MTIzNDU2Nzg5MA==
-  DB_NAME: cGVzYnVrcHJvZGRi
+  DB_NAME: cGVzYnVrc3RhZ2luZ2Ri
   MYSQL_ROOT_PASSWORD: YmlncHJvY2lsc3k=
   
 ---
@@ -46,27 +46,27 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: cilsy-prod
-  name: pesbuk-prod
+  namespace: cilsy-staging
+  name: pesbuk-staging
   labels:
-    app: pesbuk-prod
+    app: pesbuk-staging
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: pesbuk-prod
+      app: pesbuk-staging
   template:
     metadata:
       labels:
-        app: pesbuk-prod
+        app: pesbuk-staging
     spec:
       volumes:
         - name: config-secret
           configMap:
-            name: pesbuk-configmap-secret-prod
+            name: pesbuk-configmap-secret-staging
       containers:
       - name: pesbuk-prod
-        image: hansenfernando/cilsypesbuk-prod:latest
+        image: hansenfernando/cilsypesbuk-staging:latest
         ports:
         - containerPort: 80
         volumeMounts:
@@ -77,22 +77,22 @@ spec:
         - name: DB_HOST
           valueFrom:
             secretKeyRef:
-              name: pesbuk-secret-prod
+              name: pesbuk-secret-staging
               key: DB_HOST
         - name: DB_USER
           valueFrom:
             secretKeyRef:
-              name: pesbuk-secret-prod
+              name: pesbuk-secret-staging
               key: DB_USER
         - name: DB_PASS
           valueFrom:
             secretKeyRef:
-              name: pesbuk-secret-prod
+              name: pesbuk-secret-staging
               key: DB_PASS
         - name: DB_NAME
           valueFrom:
             secretKeyRef:
-              name: pesbuk-secret-prod
+              name: pesbuk-secret-staging
               key: DB_NAME
 
 ---
@@ -100,11 +100,11 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  namespace: cilsy-prod      
-  name: pesbuk-svc-prod
+  namespace: cilsy-staging
+  name: pesbuk-svc-staging
 spec:
   selector:
-    app: pesbuk-prod
+    app: pesbuk-staging
   ports:
   - protocol: TCP
     port: 80
@@ -115,12 +115,12 @@ spec:
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
-  namespace: cilsy-prod
-  name: pesbuk-ingress-prod
+  namespace: cilsy-staging
+  name: pesbuk-ingress-staging
   annotations:
      kubernetes.io/ingress.class: "nginx"
      nginx.ingress.kubernetes.io/affinity: "cookie"
-     nginx.ingress.kubernetes.io/session-cookie-name: "pesbuk-prod-cookie"
+     nginx.ingress.kubernetes.io/session-cookie-name: "pesbuk-staging-cookie"
      nginx.ingress.kubernetes.io/session-cookie-expires: "172800"
      nginx.ingress.kubernetes.io/session-cookie-max-age: "172800"
      nginx.ingress.kubernetes.io/ssl-redirect: "false"
@@ -128,9 +128,9 @@ metadata:
      nginx.ingress.kubernetes.io/session-cookie-hash: sha1
 spec:
   rules:
-  - host: cilsypesbuk.hansenfernando.xyz      
+  - host: stagingpesbuk.hansenfernando.xyz      
     http:
       paths:
         - backend:
-           serviceName: pesbuk-svc-prod
+           serviceName: pesbuk-svc-staging
            servicePort: 80
