@@ -65,7 +65,7 @@ spec:
           configMap:
             name: pesbuk-configmap-secret-staging
       containers:
-      - name: pesbuk-prod
+      - name: pesbuk-staging
         image: hansenfernando/cilsypesbuk-staging:latest
         ports:
         - containerPort: 80
